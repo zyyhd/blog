@@ -139,12 +139,12 @@ input, textarea, select { font-family: inherit; color: var(--text); }
 
 /* ===== 卡片（毛玻璃，浮在背景图上）===== */
 .card {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius);
-  box-shadow: 0 2px 16px rgba(40, 80, 130, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 16px rgba(40, 80, 130, 0.12);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
 }
 
 /* ===== Butterfly 风格全屏横幅（透明，直接展示全页背景图）===== */
@@ -286,12 +286,12 @@ input, textarea, select { font-family: inherit; color: var(--text); }
 
 /* ===== 文章横向卡片 ===== */
 .post-card {
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius); overflow: hidden;
-  box-shadow: 0 2px 16px rgba(40, 80, 130, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 16px rgba(40, 80, 130, 0.12);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
   display: flex; transition: transform 0.2s, box-shadow 0.2s;
 }
 .post-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); }
@@ -479,12 +479,12 @@ input, textarea, select { font-family: inherit; color: var(--text); }
 /* ===== 归档 ===== */
 .archive-wrap {
   max-width: 780px; margin: 0 auto;
-  background: rgba(255, 255, 255, 0.86);
-  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: var(--radius);
-  box-shadow: 0 2px 16px rgba(40, 80, 130, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 16px rgba(40, 80, 130, 0.12);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
   padding: 26px 30px;
 }
 .archive-group { margin-bottom: 28px; }
