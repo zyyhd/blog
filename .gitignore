@@ -1,0 +1,6 @@
+node_modules
+dist
+.workbuddy
+*.genie
+*.local
+.DS_Store
