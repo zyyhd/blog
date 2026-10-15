@@ -259,31 +259,6 @@ input, textarea, select { font-family: inherit; color: var(--text); }
   .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
 
-/* ===== 全站花瓣飘落 ===== */
-.petal-layer {
-  position: fixed; inset: 0; z-index: 95;
-  pointer-events: none; overflow: hidden;
-}
-.petal {
-  position: absolute; top: -6vh;
-  background: linear-gradient(135deg, #ffd9e8, #ffaed0);
-  border-radius: 150% 12% 150% 12%;
-  animation: petal-fall linear infinite;
-  will-change: transform;
-}
-.petal:nth-child(3n) { background: linear-gradient(135deg, #ffffff, #ffd9e8); }
-.petal:nth-child(4n) { background: linear-gradient(135deg, #ffeef5, #ffc2dd); }
-@keyframes petal-fall {
-  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  25% { transform: translate3d(var(--sway), 27vh, 0) rotate(100deg); }
-  50% { transform: translate3d(calc(var(--sway) * -0.8), 54vh, 0) rotate(200deg); }
-  75% { transform: translate3d(calc(var(--sway) * 0.9), 81vh, 0) rotate(300deg); }
-  100% { transform: translate3d(0, 112vh, 0) rotate(400deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .petal-layer { display: none !important; }
-}
-
 /* ===== 文章横向卡片 ===== */
 .post-card {
   background: rgba(255, 255, 255, 0.78);
