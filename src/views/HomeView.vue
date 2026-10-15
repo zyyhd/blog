@@ -24,27 +24,6 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)
 const typedQuote = ref('')
 let typeTimer = null
 
-// ===== 动态星空背景 =====
-const starsRef = ref(null)
-
-function buildStars() {
-  const host = starsRef.value
-  if (!host) return
-  const frag = document.createDocumentFragment()
-  for (let i = 0; i < 90; i++) {
-    const s = document.createElement('span')
-    const size = (Math.random() * 2 + 1).toFixed(1)
-    s.style.cssText =
-      `left:${(Math.random() * 100).toFixed(2)}%;` +
-      `top:${(Math.random() * 92).toFixed(2)}%;` +
-      `width:${size}px;height:${size}px;` +
-      `animation-delay:${(Math.random() * 4).toFixed(2)}s;` +
-      `animation-duration:${(Math.random() * 3 + 2).toFixed(2)}s`
-    frag.appendChild(s)
-  }
-  host.appendChild(frag)
-}
-
 function pickQuote() {
   const quotes = SITE.quotes
   const q = quotes[Math.floor(Math.random() * quotes.length)]
@@ -106,7 +85,6 @@ watch(tag, () => {
 
 onMounted(() => {
   pickQuote()
-  buildStars()
   load()
 })
 
@@ -116,14 +94,13 @@ onUnmounted(() => clearInterval(typeTimer))
 <template>
   <div>
     <section class="hero-banner">
-      <div ref="starsRef" class="hero-stars" aria-hidden="true"></div>
-      <div class="hero-meteors" aria-hidden="true">
-        <span class="meteor m1"></span>
-        <span class="meteor m2"></span>
-        <span class="meteor m3"></span>
+      <div class="hero-clouds" aria-hidden="true">
+        <span class="cloud c1"></span>
+        <span class="cloud c2"></span>
+        <span class="cloud c3"></span>
+        <span class="cloud c4"></span>
+        <span class="cloud c5"></span>
       </div>
-      <div class="hero-nebula n1" aria-hidden="true"></div>
-      <div class="hero-nebula n2" aria-hidden="true"></div>
       <h1 class="hero-title">{{ SITE.siteTitle }}</h1>
       <p class="hero-sub">{{ typedQuote }}</p>
       <span class="hero-scroll" @click="scrollToContent">⌄</span>
