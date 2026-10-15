@@ -9,17 +9,21 @@ const recentPosts = ref([])
 const loading = ref(true)
 
 onMounted(async () => {
-  const count = (q) => q.select('*', { count: 'exact', head: true }).then((r) => r.count || 0)
-  const [published, draft, offline, comments] = await Promise.all([
-    count(cloud.database.from('posts').eq('status', 'published')),
-    count(cloud.database.from('posts').eq('status', 'draft')),
-    count(cloud.database.from('posts').eq('status', 'offline')),
-    count(cloud.database.from('comments')),
-  ])
-  stats.published = published
-  stats.draft = draft
-  stats.offline = offline
-  stats.comments = comments
+  try {
+    const count = (q) => q.select('*', { count: 'exact', head: true }).then((r) => r.count || 0)
+    const [published, draft, offline, comments] = await Promise.all([
+      count(cloud.database.from('posts').eq('status', 'published')),
+      count(cloud.database.from('posts').eq('status', 'draft')),
+      count(cloud.database.from('posts').eq('status', 'offline')),
+      count(cloud.database.from('comments')),
+    ])
+    stats.published = published
+    stats.draft = draft
+    stats.offline = offline
+    stats.comments = comments
+  } catch (e) {
+    console.error('[dashboard] 统计加载失败：', e)
+  }
 
   const [{ data: rc }, { data: rp }] = await Promise.all([
     cloud.database.from('comments').select('*').order('created_at', { ascending: false }).limit(6),

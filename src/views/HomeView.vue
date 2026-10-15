@@ -40,22 +40,28 @@ function pickQuote() {
 async function load() {
   loading.value = true
   error.value = ''
-  let query = cloud.database
-    .from('posts')
-    .select('id, title, summary, cover_url, tags, owner_name, views, created_at', { count: 'exact' })
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-  if (tag.value) query = query.contains('tags', [tag.value])
-  const kw = keyword.value.trim()
-  if (kw) query = query.ilike('title', `%${kw}%`)
-  const { data, count, error: err } = await query.range((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE - 1)
-  loading.value = false
-  if (err) {
-    error.value = '加载失败：' + (err.message || '请稍后重试')
-    return
+  try {
+    let query = cloud.database
+      .from('posts')
+      .select('id, title, summary, cover_url, tags, owner_name, views, created_at', { count: 'exact' })
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+    if (tag.value) query = query.contains('tags', [tag.value])
+    const kw = keyword.value.trim()
+    if (kw) query = query.ilike('title', `%${kw}%`)
+    const { data, count, error: err } = await query.range((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE - 1)
+    if (err) {
+      error.value = '加载失败：' + (err.message || '请稍后重试')
+      return
+    }
+    posts.value = data || []
+    total.value = count || 0
+  } catch (e) {
+    // 网络层异常（如当前访问域名未被云服务允许）也不能卡在加载态
+    error.value = '加载失败：' + ((e && e.message) || '网络异常，请稍后重试')
+  } finally {
+    loading.value = false
   }
-  posts.value = data || []
-  total.value = count || 0
 }
 
 function search() {
