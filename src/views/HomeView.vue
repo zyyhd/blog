@@ -129,16 +129,6 @@ onUnmounted(() => {
 <template>
   <div>
     <section class="hero-banner">
-      <div class="hero-clouds" aria-hidden="true">
-        <span class="cloud c1"></span>
-        <span class="cloud c2"></span>
-        <span class="cloud c3"></span>
-        <span class="cloud c4"></span>
-        <span class="cloud c5"></span>
-        <span class="bird b1"></span>
-        <span class="bird b2"></span>
-        <span class="bird b3"></span>
-      </div>
       <h1 class="hero-title">{{ SITE.siteTitle }}</h1>
       <p class="hero-sub">{{ typedQuote }}</p>
       <span class="hero-scroll" @click="scrollToContent">⌄</span>

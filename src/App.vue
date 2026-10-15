@@ -43,6 +43,7 @@ onMounted(() => {
 
 <template>
   <div class="layout">
+    <div class="page-bg" :style="{ backgroundImage: 'url(' + SITE.bgImage + ')' }" aria-hidden="true"></div>
     <header class="site-header">
       <div class="nav-bar">
         <router-link :to="{ name: 'home' }" class="logo">blog<span class="logo-dot">.cn</span></router-link>
