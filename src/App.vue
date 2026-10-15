@@ -13,6 +13,17 @@ async function handleSignOut() {
   router.push({ name: 'home' })
 }
 
+// ===== 全页背景：静态图打底 + 动态视频叠加 =====
+const bgVideoRef = ref(null)
+
+onMounted(() => {
+  // 无障碍：用户偏好减弱动态效果时，停用视频只留静态图
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches && bgVideoRef.value) {
+    bgVideoRef.value.pause()
+    bgVideoRef.value.style.display = 'none'
+  }
+})
+
 // ===== 全站花瓣飘落 =====
 const petalsRef = ref(null)
 // 后台/编辑器不显示，避免干扰写作
@@ -43,7 +54,21 @@ onMounted(() => {
 
 <template>
   <div class="layout">
-    <div class="page-bg" :style="{ backgroundImage: 'url(' + SITE.bgImage + ')' }" aria-hidden="true"></div>
+    <div class="page-bg" aria-hidden="true">
+      <div class="page-bg-img" :style="{ backgroundImage: 'url(' + SITE.bgImage + ')' }"></div>
+      <video
+        ref="bgVideoRef"
+        class="page-bg-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        :poster="SITE.bgImage"
+      >
+        <source :src="SITE.bgVideo" type="video/mp4" />
+      </video>
+      <div class="page-bg-glow"></div>
+    </div>
     <header class="site-header">
       <div class="nav-bar">
         <router-link :to="{ name: 'home' }" class="logo">blog<span class="logo-dot">.cn</span></router-link>

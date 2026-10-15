@@ -30,16 +30,21 @@ body {
   line-height: 1.65;
   font-size: 15px;
 }
-/* 全页固定背景图（动漫插画） */
-.page-bg {
-  position: fixed; inset: 0; z-index: 0;
+/* 全页固定背景（动漫插画 + 动态视频叠加） */
+.page-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.page-bg-img {
+  position: absolute; inset: 0;
   background-repeat: no-repeat; background-position: center 32%;
   background-size: cover;
-  pointer-events: none;
 }
-/* 背景图上加一层极淡的白色柔光，保证文字可读 */
-.page-bg::after {
-  content: ''; position: absolute; inset: 0;
+.page-bg-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 32%;
+}
+/* 极淡白色柔光层，保证文字可读 */
+.page-bg-glow {
+  position: absolute; inset: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.02) 45%, rgba(240, 248, 255, 0.22) 100%);
 }
 a { color: inherit; text-decoration: none; }
