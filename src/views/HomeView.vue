@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { cloud } from '../cloud'
 import PostCard from '../components/PostCard.vue'
@@ -23,6 +23,37 @@ const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)
 // ===== 横幅随机名言（打字机效果）=====
 const typedQuote = ref('')
 let typeTimer = null
+
+// ===== 文章卡片滚动渐入 =====
+const listRef = ref(null)
+let io = null
+
+function setupReveal() {
+  if (!listRef.value) return
+  if (io) io.disconnect()
+  const cards = Array.from(listRef.value.querySelectorAll('.post-card'))
+  // 无障碍：用户偏好减弱动态效果时直接显示
+  if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    cards.forEach((c) => c.classList.add('visible'))
+    return
+  }
+  io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((en) => {
+        if (en.isIntersecting) {
+          en.target.classList.add('visible')
+          io.unobserve(en.target)
+        }
+      })
+    },
+    { rootMargin: '0px 0px -36px 0px', threshold: 0.05 },
+  )
+  cards.forEach((c, i) => {
+    c.classList.add('reveal')
+    c.style.transitionDelay = `${(i % 6) * 70}ms`
+    io.observe(c)
+  })
+}
 
 function pickQuote() {
   const quotes = SITE.quotes
@@ -61,6 +92,7 @@ async function load() {
     error.value = '加载失败：' + ((e && e.message) || '网络异常，请稍后重试')
   } finally {
     loading.value = false
+    nextTick(() => setupReveal())
   }
 }
 
@@ -88,7 +120,10 @@ onMounted(() => {
   load()
 })
 
-onUnmounted(() => clearInterval(typeTimer))
+onUnmounted(() => {
+  clearInterval(typeTimer)
+  if (io) io.disconnect()
+})
 </script>
 
 <template>
@@ -100,6 +135,9 @@ onUnmounted(() => clearInterval(typeTimer))
         <span class="cloud c3"></span>
         <span class="cloud c4"></span>
         <span class="cloud c5"></span>
+        <span class="bird b1"></span>
+        <span class="bird b2"></span>
+        <span class="bird b3"></span>
       </div>
       <h1 class="hero-title">{{ SITE.siteTitle }}</h1>
       <p class="hero-sub">{{ typedQuote }}</p>
@@ -108,7 +146,7 @@ onUnmounted(() => clearInterval(typeTimer))
 
     <div class="container" id="home-content">
       <div class="home-layout">
-        <div class="post-list">
+        <div class="post-list" ref="listRef">
           <div v-if="tag" class="filter-bar">
             <span style="font-size: 13.5px; color: var(--text-2)">标签筛选：</span>
             <router-link :to="{ name: 'home' }" class="filter-chip active">{{ tag }} ✕</router-link>

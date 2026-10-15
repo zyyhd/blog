@@ -170,12 +170,54 @@ input, textarea, select { font-family: inherit; color: var(--text); }
 .cloud.c3 { width: 300px; height: 84px; top: 60%; animation-duration: 110s; animation-delay: -35s; opacity: 0.9; }
 .cloud.c4 { width: 120px; height: 36px; top: 28%; animation-duration: 60s; animation-delay: -42s; opacity: 0.6; }
 .cloud.c5 { width: 190px; height: 54px; top: 74%; animation-duration: 85s; animation-delay: -8s; opacity: 0.8; }
-@media (prefers-reduced-motion: reduce) {
-  .cloud { animation: none !important; }
+
+/* 飞鸟群：剪影掠过云海（翅膀扇动 + 横飞） */
+.bird {
+  position: absolute; left: 0; width: 14px; height: 10px;
+  animation: bird-fly 40s linear infinite;
 }
+.bird::before, .bird::after {
+  content: ''; position: absolute; top: 2px; width: 9px; height: 2.6px;
+  border-radius: 2px; background: rgba(47, 79, 110, 0.78);
+}
+.bird::before { left: 0; transform-origin: right center; animation: wing-l 0.55s ease-in-out infinite; }
+.bird::after { right: 0; transform-origin: left center; animation: wing-r 0.55s ease-in-out infinite; }
+@keyframes wing-l {
+  0%, 100% { transform: rotate(-24deg); }
+  50% { transform: rotate(12deg); }
+}
+@keyframes wing-r {
+  0%, 100% { transform: rotate(24deg); }
+  50% { transform: rotate(-12deg); }
+}
+@keyframes bird-fly {
+  from { transform: translate3d(-8vw, 0, 0); }
+  to { transform: translate3d(108vw, -22px, 0); }
+}
+.bird.b1 { top: 22%; animation-duration: 40s; animation-delay: -6s; }
+.bird.b2 { top: 25.5%; animation-duration: 40s; animation-delay: -6.9s; }
+.bird.b3 { top: 20%; animation-duration: 40s; animation-delay: -7.8s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cloud, .bird, .bird::before, .bird::after { animation: none !important; }
+  .bird { display: none; }
+}
+/* 站名：渐变流光（光带缓慢来回扫过） */
 .hero-title {
-  position: relative; color: #14507e; font-size: 52px; font-weight: 800;
-  letter-spacing: 4px; text-shadow: 0 2px 14px rgba(255, 255, 255, 0.65);
+  position: relative; font-size: 52px; font-weight: 800; letter-spacing: 4px;
+  color: #14507e;
+  background: linear-gradient(100deg, #14507e 0%, #2e86c8 30%, #00c4b6 50%, #2e86c8 70%, #14507e 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: title-shine 6s ease-in-out infinite alternate;
+}
+@keyframes title-shine {
+  from { background-position: 0% 50%; }
+  to { background-position: 100% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-title { animation: none !important; }
 }
 .hero-sub {
   position: relative; color: #3a6e9e;
@@ -252,6 +294,16 @@ input, textarea, select { font-family: inherit; color: var(--text); }
 .sidebar-link time { color: var(--text-3); font-size: 12.5px; flex-shrink: 0; }
 .sidebar-body .tag { cursor: pointer; transition: all 0.15s; }
 .sidebar-body .tag:hover { background: var(--primary); color: #fff; }
+
+/* ===== 文章卡片滚动渐入 ===== */
+.reveal {
+  opacity: 0; transform: translateY(26px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.visible { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
 
 /* ===== 文章横向卡片 ===== */
 .post-card {
