@@ -126,23 +126,70 @@ input, textarea, select { font-family: inherit; color: var(--text); }
   border-radius: var(--radius); box-shadow: var(--shadow);
 }
 
-/* ===== Butterfly 风格全屏横幅 ===== */
+/* ===== Butterfly 风格全屏横幅（动态星空）===== */
 .hero-banner {
   position: relative; height: 68vh; min-height: 430px;
-  background: linear-gradient(135deg, #49b1f5 0%, #3c9ee8 45%, #00c4b6 100%);
+  background: linear-gradient(180deg, #071a33 0%, #0d2b52 48%, #0e5f5b 100%);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   overflow: hidden;
 }
-.hero-banner::before {
-  content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.14) 0, transparent 26%),
-    radial-gradient(circle at 85% 70%, rgba(255, 255, 255, 0.1) 0, transparent 30%),
-    radial-gradient(circle at 70% 20%, rgba(255, 255, 255, 0.08) 0, transparent 22%);
+/* 星云光斑：缓慢漂移 */
+.hero-nebula {
+  position: absolute; border-radius: 50%; filter: blur(60px);
+  opacity: 0.5; pointer-events: none;
+}
+.hero-nebula.n1 {
+  width: 560px; height: 360px; left: -120px; top: -80px;
+  background: radial-gradient(closest-side, rgba(73, 177, 245, 0.55), transparent 70%);
+  animation: nebula-drift 26s ease-in-out infinite alternate;
+}
+.hero-nebula.n2 {
+  width: 640px; height: 420px; right: -160px; bottom: -140px;
+  background: radial-gradient(closest-side, rgba(0, 196, 182, 0.45), transparent 70%);
+  animation: nebula-drift 34s ease-in-out infinite alternate-reverse;
+}
+@keyframes nebula-drift {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(60px, 30px, 0) scale(1.15); }
+}
+/* 星星：JS 随机生成，交错闪烁 */
+.hero-stars { position: absolute; inset: 0; pointer-events: none; }
+.hero-stars span {
+  position: absolute; border-radius: 50%; background: #fff;
+  opacity: 0.25; animation-name: twinkle; animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50% { opacity: 0.95; transform: scale(1.2); }
+}
+/* 流星：拖尾划过，长间隔循环 */
+.hero-meteors { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.meteor {
+  position: absolute; width: 2.5px; height: 2.5px; border-radius: 50%;
+  background: #fff; opacity: 0;
+  box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.8);
+}
+.meteor::before {
+  content: ''; position: absolute; top: 50%; right: 2px;
+  width: 110px; height: 1.5px; transform: translateY(-50%);
+  background: linear-gradient(270deg, rgba(255, 255, 255, 0.9), transparent);
+}
+.meteor.m1 { left: 18%; top: 12%; animation: shoot 9s linear infinite 1.5s; }
+.meteor.m2 { left: 55%; top: 6%; animation: shoot 12s linear infinite 5s; }
+.meteor.m3 { left: 78%; top: 22%; animation: shoot 15s linear infinite 9s; }
+@keyframes shoot {
+  0% { opacity: 0; transform: translate3d(0, 0, 0) rotate(-35deg); }
+  2% { opacity: 1; }
+  9% { opacity: 0; transform: translate3d(-260px, 182px, 0) rotate(-35deg); }
+  100% { opacity: 0; transform: translate3d(-260px, 182px, 0) rotate(-35deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-stars span, .meteor, .hero-nebula { animation: none !important; }
 }
 .hero-title {
   position: relative; color: #fff; font-size: 52px; font-weight: 800;
-  letter-spacing: 4px; text-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  letter-spacing: 4px; text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
 }
 .hero-sub {
   position: relative; color: rgba(255, 255, 255, 0.92);
