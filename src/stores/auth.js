@@ -13,12 +13,21 @@ export const auth = reactive({
 
 // 应用启动时调用一次：处理微信登录回调 → 恢复本地会话 → 加载用户档案
 // 无论内部是否出错，ready 都必须置 true，避免页面永远卡在启动态
-export async function initAuth() {
-  try {
-    await restoreAuth()
-  } finally {
-    auth.ready = true
+// 幂等：多处 await 时复用同一个 Promise，避免重复消费一次性 OAuth 回调参数
+let initPromise = null
+export function initAuth() {
+  if (!initPromise) {
+    initPromise = (async () => {
+      try {
+        await restoreAuth()
+      } catch (e) {
+        console.error('[auth] 初始化失败，以未登录状态继续：', e)
+      } finally {
+        auth.ready = true
+      }
+    })()
   }
+  return initPromise
 }
 
 async function restoreAuth() {

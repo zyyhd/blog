@@ -23,6 +23,7 @@ const guestName = ref(localStorage.getItem('blog_guest_name') || '')
 const commentText = ref('')
 const commentBusy = ref(false)
 const commentError = ref('')
+const commentNotice = ref('')
 
 const isOwner = computed(() => !!(auth.user && post.value && post.value.owner_id === auth.user.id))
 
@@ -94,11 +95,13 @@ async function submitComment() {
   if (!text || commentBusy.value) return
   commentBusy.value = true
   commentError.value = ''
+  commentNotice.value = ''
 
   let payload
+  let needModeration = false
   if (auth.user) {
-    // 管理员评论：身份由数据库自动绑定
-    payload = { post_id: postId, content: text, owner_name: SITE.authorName }
+    // 站长本人评论：身份由数据库自动绑定，直接公开
+    payload = { post_id: postId, content: text, owner_name: SITE.authorName, status: 'visible' }
   } else {
     const nameError = validGuestName()
     if (nameError) {
@@ -106,10 +109,21 @@ async function submitComment() {
       commentError.value = nameError
       return
     }
-    payload = { post_id: postId, content: text, guest_name: guestName.value.trim() }
+    // 游客评论进入待审核队列，由后台审核通过后才在前台展示
+    payload = { post_id: postId, content: text, guest_name: guestName.value.trim(), status: 'pending' }
+    needModeration = true
   }
 
-  const { error: e } = await cloud.database.from('comments').insert(payload)
+  let { error: e } = await cloud.database.from('comments').insert(payload)
+
+  // 兜底：数据库策略若固定了 status 字段，带 status 的写入会被 RLS 拒绝，
+  // 此时退回不传 status，交由数据库默认值决定（见 docs/comment-moderation.sql）
+  if (e && /row-level security|policy/i.test(e.message || '')) {
+    const fallback = { ...payload }
+    delete fallback.status
+    ;({ error: e } = await cloud.database.from('comments').insert(fallback))
+  }
+
   commentBusy.value = false
   if (e) {
     commentError.value = e.message || '评论失败，请稍后重试'
@@ -117,6 +131,7 @@ async function submitComment() {
   }
   if (!auth.user) localStorage.setItem('blog_guest_name', guestName.value.trim())
   commentText.value = ''
+  if (needModeration) commentNotice.value = '评论已提交，通过审核后展示'
   await loadComments()
 }
 
@@ -213,6 +228,7 @@ onMounted(() => {
               :placeholder="auth.user ? `以「${SITE.authorName}」的身份回复…` : '说点什么吧…（无需注册，最多 500 字）'"
             ></textarea>
             <div v-if="commentError" class="form-error">{{ commentError }}</div>
+            <div v-if="commentNotice" class="form-success">{{ commentNotice }}</div>
           </div>
           <div style="display: flex; justify-content: flex-end">
             <button class="btn btn-primary" :disabled="commentBusy || !commentText.trim()" @click="submitComment">

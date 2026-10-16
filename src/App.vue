@@ -53,7 +53,7 @@ onMounted(() => {
               <div class="avatar" :title="displayName"><img :src="SITE.avatar" :alt="displayName" /></div>
               <div class="dropdown">
                 <div class="dropdown-name">{{ displayName }}</div>
-                <router-link :to="{ name: 'admin-dashboard' }">后台管理</router-link>
+                <router-link v-if="auth.isAdmin" :to="{ name: 'admin-dashboard' }">后台管理</router-link>
                 <a href="javascript:void(0)" class="dropdown-danger" @click="handleSignOut">退出登录</a>
               </div>
             </div>
