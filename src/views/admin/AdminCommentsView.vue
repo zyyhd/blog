@@ -8,12 +8,17 @@ const PAGE_SIZE = 15
 const comments = ref([])
 const total = ref(0)
 const page = ref(1)
-const filter = ref('all') // all | visible | hidden
+const filter = ref('pending') // all | pending | visible | hidden
 const loading = ref(true)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
 
+// 请求令牌：快速切换筛选/翻页时，先发出的请求可能后返回，
+// 用递增令牌丢弃过期响应，避免旧数据覆盖新数据
+let reqToken = 0
+
 async function load() {
+  const token = ++reqToken
   loading.value = true
   let query = cloud.database
     .from('comments')
@@ -21,16 +26,20 @@ async function load() {
     .order('created_at', { ascending: false })
   if (filter.value !== 'all') query = query.eq('status', filter.value)
   const { data, count } = await query.range((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE - 1)
-  loading.value = false
+  if (token !== reqToken) return
   comments.value = data || []
   total.value = count || 0
-  await attachPostTitles()
+  // 先补齐文章标题再解除 loading，避免表格先渲染出 #id 占位再跳变
+  await attachPostTitles(token)
+  if (token !== reqToken) return
+  loading.value = false
 }
 
-async function attachPostTitles() {
+async function attachPostTitles(token) {
   const ids = [...new Set(comments.value.map((c) => c.post_id))]
   if (!ids.length) return
   const { data: posts } = await cloud.database.from('posts').select('id, title').in('id', ids)
+  if (token !== undefined && token !== reqToken) return
   const map = new Map((posts || []).map((p) => [p.id, p.title]))
   comments.value = comments.value.map((c) => ({ ...c, post_title: map.get(c.post_id) || `#${c.post_id}` }))
 }
@@ -46,10 +55,31 @@ function goPage(p) {
   load()
 }
 
+// 审核通过：pending → visible
+async function approveComment(c) {
+  if (!confirm('确定通过这条评论？通过后将在前台公开显示。')) return
+  await updateStatus(c, 'visible')
+}
+
+// 隐藏 / 恢复显示：pending、visible → hidden；hidden → visible
 async function toggleStatus(c) {
-  const next = c.status === 'visible' ? 'hidden' : 'visible'
+  const next = c.status === 'hidden' ? 'visible' : 'hidden'
   const action = next === 'hidden' ? '隐藏' : '显示'
   if (!confirm(`确定${action}这条评论？`)) return
+  await updateStatus(c, next)
+}
+
+const STATUS_META = {
+  pending: { text: '待审核', cls: 'badge-pending' },
+  visible: { text: '可见', cls: 'badge-visible' },
+  hidden: { text: '已隐藏', cls: 'badge-hidden' },
+}
+
+function statusMeta(status) {
+  return STATUS_META[status] || { text: status || '未知', cls: 'badge-hidden' }
+}
+
+async function updateStatus(c, next) {
   const { data, error } = await cloud.database.from('comments').update({ status: next }).eq('id', c.id).select()
   if (error || !data || data.length === 0) {
     alert('操作失败：' + ((error && error.message) || '无权限'))
@@ -76,9 +106,10 @@ onMounted(load)
     <h2 class="admin-page-title">评论管理（{{ total }}）</h2>
 
     <div class="filter-bar">
-      <button class="filter-chip" :class="{ active: filter === 'all' }" @click="setFilter('all')">全部</button>
+      <button class="filter-chip" :class="{ active: filter === 'pending' }" @click="setFilter('pending')">待审核</button>
       <button class="filter-chip" :class="{ active: filter === 'visible' }" @click="setFilter('visible')">可见</button>
       <button class="filter-chip" :class="{ active: filter === 'hidden' }" @click="setFilter('hidden')">已隐藏</button>
+      <button class="filter-chip" :class="{ active: filter === 'all' }" @click="setFilter('all')">全部</button>
     </div>
 
     <div v-if="loading" class="loading-bar">加载中…</div>
@@ -96,15 +127,14 @@ onMounted(load)
               <router-link :to="{ name: 'post', params: { id: c.post_id } }">{{ c.post_title }}</router-link>
             </td>
             <td>
-              <span class="badge" :class="c.status === 'visible' ? 'badge-visible' : 'badge-hidden'">
-                {{ c.status === 'visible' ? '可见' : '已隐藏' }}
-              </span>
+              <span class="badge" :class="statusMeta(c.status).cls">{{ statusMeta(c.status).text }}</span>
             </td>
             <td>{{ formatDate(c.created_at) }}</td>
             <td>
               <div class="row-actions">
+                <button v-if="c.status === 'pending'" class="btn btn-primary btn-sm" @click="approveComment(c)">通过</button>
                 <button class="btn btn-outline btn-sm" @click="toggleStatus(c)">
-                  {{ c.status === 'visible' ? '隐藏' : '显示' }}
+                  {{ c.status === 'hidden' ? '显示' : '隐藏' }}
                 </button>
                 <button class="btn btn-danger btn-sm" @click="removeComment(c)">删除</button>
               </div>

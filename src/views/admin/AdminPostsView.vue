@@ -13,7 +13,12 @@ const loading = ref(true)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(total.value / PAGE_SIZE)))
 
+// 请求令牌：快速切换筛选/翻页时，先发出的请求可能后返回，
+// 用递增令牌丢弃过期响应，避免旧数据覆盖新数据
+let reqToken = 0
+
 async function load() {
+  const token = ++reqToken
   loading.value = true
   let query = cloud.database
     .from('posts')
@@ -21,6 +26,7 @@ async function load() {
     .order('created_at', { ascending: false })
   if (filter.value !== 'all') query = query.eq('status', filter.value)
   const { data, count } = await query.range((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE - 1)
+  if (token !== reqToken) return
   loading.value = false
   posts.value = data || []
   total.value = count || 0

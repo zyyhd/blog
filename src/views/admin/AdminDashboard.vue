@@ -3,7 +3,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { cloud } from '../../cloud'
 import { formatDate } from '../../lib/format'
 
-const stats = reactive({ published: 0, draft: 0, offline: 0, comments: 0 })
+const stats = reactive({ published: 0, draft: 0, offline: 0, comments: 0, pending: 0 })
 const recentComments = ref([])
 const recentPosts = ref([])
 const loading = ref(true)
@@ -11,16 +11,18 @@ const loading = ref(true)
 onMounted(async () => {
   try {
     const count = (q) => q.select('*', { count: 'exact', head: true }).then((r) => r.count || 0)
-    const [published, draft, offline, comments] = await Promise.all([
+    const [published, draft, offline, comments, pending] = await Promise.all([
       count(cloud.database.from('posts').eq('status', 'published')),
       count(cloud.database.from('posts').eq('status', 'draft')),
       count(cloud.database.from('posts').eq('status', 'offline')),
       count(cloud.database.from('comments')),
+      count(cloud.database.from('comments').eq('status', 'pending')),
     ])
     stats.published = published
     stats.draft = draft
     stats.offline = offline
     stats.comments = comments
+    stats.pending = pending
   } catch (e) {
     console.error('[dashboard] 统计加载失败：', e)
   }
@@ -52,8 +54,9 @@ onMounted(async () => {
     <template v-else>
       <div class="stat-grid">
         <div class="card stat-card blue"><div class="stat-value">{{ stats.published }}</div><div class="stat-label">已发布文章</div></div>
+        <div class="card stat-card red"><div class="stat-value">{{ stats.pending }}</div><div class="stat-label">待审核评论</div></div>
         <div class="card stat-card orange"><div class="stat-value">{{ stats.draft }}</div><div class="stat-label">草稿</div></div>
-        <div class="card stat-card red"><div class="stat-value">{{ stats.offline }}</div><div class="stat-label">已下架</div></div>
+        <div class="card stat-card gray"><div class="stat-value">{{ stats.offline }}</div><div class="stat-label">已下架</div></div>
         <div class="card stat-card green"><div class="stat-value">{{ stats.comments }}</div><div class="stat-label">评论总数</div></div>
       </div>
 
