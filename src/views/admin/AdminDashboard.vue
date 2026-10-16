@@ -28,19 +28,12 @@ onMounted(async () => {
   }
 
   const [{ data: rc }, { data: rp }] = await Promise.all([
-    cloud.database.from('comments').select('*').order('created_at', { ascending: false }).limit(6),
+    // 关联查询直接带出文章标题，省掉原来「先查评论、再查标题」的第二次往返
+    cloud.database.from('comments').select('*, post:posts(id, title)').order('created_at', { ascending: false }).limit(6),
     cloud.database.from('posts').select('id, title, status, owner_name, created_at').order('created_at', { ascending: false }).limit(6),
   ])
   recentComments.value = rc || []
   recentPosts.value = rp || []
-
-  // 关联文章标题
-  const ids = [...new Set(recentComments.value.map((c) => c.post_id))]
-  if (ids.length) {
-    const { data: posts } = await cloud.database.from('posts').select('id, title').in('id', ids)
-    const map = new Map((posts || []).map((p) => [p.id, p.title]))
-    recentComments.value = recentComments.value.map((c) => ({ ...c, post_title: map.get(c.post_id) || `#${c.post_id}` }))
-  }
   loading.value = false
 })
 </script>
@@ -69,7 +62,7 @@ onMounted(async () => {
             </thead>
             <tbody>
               <tr v-for="p in recentPosts" :key="p.id">
-                <td class="wrap-cell"><router-link :to="{ name: 'post', params: { id: p.id } }">{{ p.title }}</router-link></td>
+                <td class="wrap-cell"><router-link :to="{ name: 'editor-edit', params: { id: p.id } }">{{ p.title }}</router-link></td>
                 <td>{{ p.owner_name || '匿名' }}</td>
                 <td>
                   <span class="badge" :class="'badge-' + p.status">
@@ -95,7 +88,7 @@ onMounted(async () => {
               <tr v-for="c in recentComments" :key="c.id">
                 <td>{{ c.owner_name || '匿名' }}</td>
                 <td class="wrap-cell">{{ c.content.slice(0, 40) }}{{ c.content.length > 40 ? '…' : '' }}</td>
-                <td class="wrap-cell">{{ c.post_title }}</td>
+                <td class="wrap-cell">{{ c.post?.title || '#' + c.post_id }}</td>
                 <td>
                   <span class="badge" :class="c.status === 'visible' ? 'badge-visible' : 'badge-hidden'">
                     {{ c.status === 'visible' ? '可见' : '已隐藏' }}

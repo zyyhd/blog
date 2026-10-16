@@ -43,6 +43,17 @@ function goPage(p) {
   load()
 }
 
+// 单条变更后只更新本地列表，不整页重拉；
+// 若当前筛选下该条已不匹配，则从列表移除，并在删空当前页时回退一页
+function removeRowFromPage(row) {
+  posts.value = posts.value.filter((x) => x.id !== row.id)
+  total.value = Math.max(0, total.value - 1)
+  if (posts.value.length === 0 && page.value > 1) {
+    page.value -= 1
+    load()
+  }
+}
+
 async function setPostStatus(p, status) {
   const action = status === 'published' ? '恢复发布' : '下架'
   if (!confirm(`确定${action}《${p.title}》？`)) return
@@ -55,7 +66,12 @@ async function setPostStatus(p, status) {
     alert('操作失败：' + ((error && error.message) || '无权限'))
     return
   }
-  await load()
+  const updated = data[0]
+  if (filter.value !== 'all' && updated.status !== filter.value) {
+    removeRowFromPage(p)
+  } else {
+    Object.assign(p, updated)
+  }
 }
 
 async function removePost(p) {
@@ -65,7 +81,7 @@ async function removePost(p) {
     alert('删除失败：' + ((error && error.message) || '无权限'))
     return
   }
-  await load()
+  removeRowFromPage(p)
 }
 
 onMounted(load)

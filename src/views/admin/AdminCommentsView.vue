@@ -22,26 +22,31 @@ async function load() {
   loading.value = true
   let query = cloud.database
     .from('comments')
-    .select('*', { count: 'exact' })
+    // 用 PostgREST 的关联查询直接带出所属文章标题，省掉第二次往返，
+    // 也顺带消除了标题从 #id 占位跳变的问题
+    .select('*, post:posts(id, title)', { count: 'exact' })
     .order('created_at', { ascending: false })
   if (filter.value !== 'all') query = query.eq('status', filter.value)
   const { data, count } = await query.range((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE - 1)
   if (token !== reqToken) return
   comments.value = data || []
   total.value = count || 0
-  // 先补齐文章标题再解除 loading，避免表格先渲染出 #id 占位再跳变
-  await attachPostTitles(token)
-  if (token !== reqToken) return
   loading.value = false
 }
 
-async function attachPostTitles(token) {
-  const ids = [...new Set(comments.value.map((c) => c.post_id))]
-  if (!ids.length) return
-  const { data: posts } = await cloud.database.from('posts').select('id, title').in('id', ids)
-  if (token !== undefined && token !== reqToken) return
-  const map = new Map((posts || []).map((p) => [p.id, p.title]))
-  comments.value = comments.value.map((c) => ({ ...c, post_title: map.get(c.post_id) || `#${c.post_id}` }))
+function postTitle(c) {
+  return c.post?.title || `#${c.post_id}`
+}
+
+// 单条变更后只更新本地列表，不整页重拉；
+// 若当前筛选下该条已不匹配，则从列表移除，并在删空当前页时回退一页
+function removeRowFromPage(row) {
+  comments.value = comments.value.filter((x) => x.id !== row.id)
+  total.value = Math.max(0, total.value - 1)
+  if (comments.value.length === 0 && page.value > 1) {
+    page.value -= 1
+    load()
+  }
 }
 
 function setFilter(f) {
@@ -85,7 +90,13 @@ async function updateStatus(c, next) {
     alert('操作失败：' + ((error && error.message) || '无权限'))
     return
   }
-  await load()
+  const updated = data[0]
+  if (filter.value !== 'all' && updated.status !== filter.value) {
+    removeRowFromPage(c)
+  } else {
+    // Object.assign 只覆盖返回的字段，关联出来的 post 会保留
+    Object.assign(c, updated)
+  }
 }
 
 async function removeComment(c) {
@@ -95,7 +106,7 @@ async function removeComment(c) {
     alert('删除失败：' + ((error && error.message) || '无权限'))
     return
   }
-  await load()
+  removeRowFromPage(c)
 }
 
 onMounted(load)
@@ -124,7 +135,7 @@ onMounted(load)
             <td>{{ c.owner_name || c.guest_name || '游客' }}</td>
             <td class="wrap-cell">{{ c.content.slice(0, 50) }}{{ c.content.length > 50 ? '…' : '' }}</td>
             <td class="wrap-cell">
-              <router-link :to="{ name: 'post', params: { id: c.post_id } }">{{ c.post_title }}</router-link>
+              <router-link :to="{ name: 'post', params: { id: c.post_id } }">{{ postTitle(c) }}</router-link>
             </td>
             <td>
               <span class="badge" :class="statusMeta(c.status).cls">{{ statusMeta(c.status).text }}</span>

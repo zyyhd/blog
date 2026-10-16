@@ -19,6 +19,7 @@ import LoginView from '../LoginView.vue'
         <router-link :to="{ name: 'admin-dashboard' }">📊 概览</router-link>
         <router-link :to="{ name: 'admin-posts' }">📝 文章管理</router-link>
         <router-link :to="{ name: 'admin-comments' }">💬 评论管理</router-link>
+        <router-link :to="{ name: 'editor-new' }">✍️ 写文章</router-link>
       </aside>
       <section class="admin-main">
         <router-view />
